@@ -8,6 +8,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.adyen.android.assignment.databinding.ActivityMainBinding
+import com.adyen.android.assignment.ui.state.MainState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -24,6 +25,36 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         initViews()
+        observeStates()
+
+        viewModel.fetchNearByVenues(latitude = null, longitude = null)
+    }
+
+    private fun observeStates() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.state.collect { state ->
+                    handleState(state)
+                }
+            }
+        }
+    }
+
+    private fun handleState(state: MainState) {
+        when (state) {
+            is MainState.Uninitialized -> {
+                // todo@nurisis: 상태 처리
+            }
+            is MainState.Loading -> {
+                // todo@nurisis: 상태 처리
+            }
+            is MainState.Error -> {
+                // todo@nurisis: 상태 처리
+            }
+            is MainState.ShowVenues -> {
+                venuesListAdapter?.submitList(state.list)
+            }
+        }
     }
 
     private fun initViews() {
