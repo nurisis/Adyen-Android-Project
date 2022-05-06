@@ -1,6 +1,6 @@
 package com.adyen.android.assignment.api.model
 
-data class Result(
+data class VenueResult(
     val categories: List<Category>,
     val distance: Int,
     val geocode: GeoCode,
