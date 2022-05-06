@@ -18,6 +18,13 @@
             android:layout_height="wrap_content"
             app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/setCurrentLocationButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:text="@string/main_set_your_location" />
+
             <com.google.android.material.appbar.CollapsingToolbarLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
