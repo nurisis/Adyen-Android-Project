@@ -14,6 +14,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.adyen.android.assignment.R
 import com.adyen.android.assignment.databinding.ActivityMainBinding
 import com.adyen.android.assignment.ui.adapter.VenuesListAdapter
@@ -29,9 +30,15 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private val venuesListAdapter: VenuesListAdapter by lazy { VenuesListAdapter() }
 
+    private val scrollPositionKey = "KEY_SCROLL_POSITION"
+
     private val requestFineLocationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            viewModel.setLocationPermissionGranted(isGranted = isGranted || isPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION))
+            viewModel.setLocationPermissionGranted(
+                isGranted = isGranted || isPermissionGranted(
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
         }
 
     private val requestLocationPermissionsLauncher =
@@ -53,6 +60,8 @@ class MainActivity : AppCompatActivity() {
 
         initViews()
         observeStates()
+
+        viewModel.setScrollPosition(savedInstanceState?.getInt(scrollPositionKey))
     }
 
     override fun onStart() {
@@ -159,7 +168,10 @@ class MainActivity : AppCompatActivity() {
                 binding.emptyView.visibility = View.GONE
                 binding.currentLocationImageView.visibility = View.VISIBLE
 
-                venuesListAdapter.submitList(state.list)
+                venuesListAdapter.submitList(state.list) {
+                    state.scrollPosition?.let {
+                        binding.venuesRecyclerView.scrollToPosition(it) }
+                }
             }
             is MainState.PermissionDenied -> {
                 binding.coordinator.visibility = View.GONE
@@ -195,7 +207,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun goToAppSetting() {
-        // todo@nurisis: 여기 코드 개선가능한지 체크 필요
         startActivity(
             Intent(
                 Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -203,7 +214,8 @@ class MainActivity : AppCompatActivity() {
             ).apply {
                 addCategory(Intent.CATEGORY_DEFAULT)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            })
+            }
+        )
     }
 
     private fun initViews() {
@@ -211,6 +223,14 @@ class MainActivity : AppCompatActivity() {
 
         binding.currentLocationImageView.setOnClickListener {
             checkLocationPermissions()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        (binding.venuesRecyclerView.layoutManager as? LinearLayoutManager)?.findFirstCompletelyVisibleItemPosition()?.let {
+            outState.putInt(scrollPositionKey, it)
         }
     }
 

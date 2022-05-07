@@ -16,7 +16,8 @@ sealed class MainState {
         object Empty : PermissionGranted()
 
         data class ShowVenues(
-            val list: List<VenueResult>
+            val list: List<VenueResult>,
+            val scrollPosition: Int?
         ) : MainState()
     }
 

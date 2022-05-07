@@ -1,6 +1,7 @@
 package com.adyen.android.assignment.ui
 
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.adyen.android.assignment.api.VenueRecommendationsUseCase
@@ -11,7 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val venueRecommendationsUseCase: VenueRecommendationsUseCase
+    private val venueRecommendationsUseCase: VenueRecommendationsUseCase,
 ) : ViewModel() {
 
     companion object {
@@ -19,6 +20,10 @@ class MainViewModel @Inject constructor(
     }
 
     val state = MutableLiveData<MainState>(MainState.Uninitialized)
+
+    // Remember scroll position of the list for configuration changes
+    var scrollPosition : Int? = null
+        private set
 
     fun fetchNearByVenues(latitude: Double?, longitude: Double?) {
         if (latitude == null || longitude == null) {
@@ -37,15 +42,18 @@ class MainViewModel @Inject constructor(
                 )
 
                 state.value = if (result?.isNotEmpty() == true) {
-                    MainState.PermissionGranted.ShowVenues(list = result.sortedBy { it.distance })
+                    MainState.PermissionGranted.ShowVenues(
+                        list = result.sortedBy { it.distance },
+                        scrollPosition = scrollPosition
+                    )
                 } else {
                     MainState.PermissionGranted.Empty
                 }
 
+                setScrollPosition(null)
             } catch (e: Exception) {
                 state.value = MainState.Error.General
             }
-
         }
     }
 
@@ -56,4 +64,9 @@ class MainViewModel @Inject constructor(
             state.value = MainState.PermissionDenied
         }
     }
+
+    fun setScrollPosition(position: Int?) {
+        scrollPosition = position
+    }
+
 }
