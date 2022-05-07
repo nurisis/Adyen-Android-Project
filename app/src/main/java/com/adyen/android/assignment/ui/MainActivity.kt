@@ -8,7 +8,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -18,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.adyen.android.assignment.R
 import com.adyen.android.assignment.databinding.ActivityMainBinding
+import com.adyen.android.assignment.ui.adapter.VenuesListAdapter
 import com.adyen.android.assignment.ui.state.MainAction
 import com.adyen.android.assignment.ui.state.MainUIState
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
-    private var venuesListAdapter: VenuesListAdapter? = null
+    private val venuesListAdapter: VenuesListAdapter by lazy { VenuesListAdapter() }
 
     private val locationPermission = Manifest.permission.ACCESS_COARSE_LOCATION
     private val requestPermissionLauncher =
@@ -186,11 +186,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        venuesListAdapter = VenuesListAdapter {
-            // todo@nurisis: 클릭 처리
-            Toast.makeText(this, "Click: ${it.name}", Toast.LENGTH_SHORT).show()
-        }
-
         binding.venuesRecyclerView.adapter = venuesListAdapter
 
         binding.currentLocationImageView.setOnClickListener {

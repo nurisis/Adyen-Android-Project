@@ -4,6 +4,7 @@ import com.adyen.android.assignment.api.model.VenueResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.util.*
 import javax.inject.Inject
 
 class VenueRecommendationsUseCase @Inject constructor() {
@@ -14,15 +15,13 @@ class VenueRecommendationsUseCase @Inject constructor() {
         longitude: Double,
         limit: Int
     ): List<VenueResult>? = withContext(Dispatchers.IO) {
-        println("LOG>> [${Thread.currentThread()}] get venues")
-
         val query = VenueRecommendationsQueryBuilder()
             .setLatitudeLongitude(latitude, longitude)
             .setLimit(limit)
             .build()
 
         val response = PlacesService.instance
-            .getVenueRecommendations(query)
+            .getVenueRecommendations(query = query, language = Locale.getDefault().language)
             .execute()
 
         return@withContext response.body()?.results

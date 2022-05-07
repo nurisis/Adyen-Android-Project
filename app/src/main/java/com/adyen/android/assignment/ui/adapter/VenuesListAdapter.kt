@@ -1,4 +1,4 @@
-package com.adyen.android.assignment.ui
+package com.adyen.android.assignment.ui.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -8,16 +8,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.adyen.android.assignment.api.model.VenueResult
 import com.adyen.android.assignment.databinding.ItemVenueBinding
 
-class VenuesListAdapter(
-    private val onItemClick: (venue: VenueResult) -> Unit,
-) : ListAdapter<VenueResult, VenuesListAdapter.VenueHolder>(
+class VenuesListAdapter : ListAdapter<VenueResult, VenuesListAdapter.VenueHolder>(
     VenueDiffCallback()
 ) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VenueHolder {
         return VenueHolder(
             ItemVenueBinding.inflate(LayoutInflater.from(parent.context), parent, false),
-            onItemClick
         )
     }
 
@@ -27,7 +24,6 @@ class VenuesListAdapter(
 
     inner class VenueHolder constructor(
         private val binding: ItemVenueBinding,
-        private val onItemClick: (venue: VenueResult) -> Unit,
     ) : RecyclerView.ViewHolder(binding.root) {
 
         private val categoryListAdapter: VenueCategoryListAdapter = VenueCategoryListAdapter()
@@ -38,16 +34,10 @@ class VenuesListAdapter(
 
         fun bind(item: VenueResult) {
             binding.name.text = item.name
-            binding.distance.text = "${item.distance}m"
+            binding.address.text = item.location.formatted_address
+            binding.distance.text = "${item.distance}m away from you \uD83D\uDE0A"
 
             categoryListAdapter.submitList(item.categories)
-
-//            Glide.with(binding.root.context)
-//                .load(item.)
-//                .centerCrop()
-//                .into(binding.venuImageView)
-
-            binding.root.setOnClickListener { onItemClick.invoke(item) }
         }
     }
 }

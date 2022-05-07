@@ -1,13 +1,14 @@
-package com.adyen.android.assignment.ui
+package com.adyen.android.assignment.ui.adapter
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.adyen.android.assignment.R
 import com.adyen.android.assignment.api.model.Category
 import com.google.android.material.chip.Chip
 
-class VenueCategoryListAdapter() : ListAdapter<Category, VenueCategoryListAdapter.CategoryHolder>(
+class VenueCategoryListAdapter : ListAdapter<Category, VenueCategoryListAdapter.CategoryHolder>(
     CategoryDiffCallback()
 ) {
 
@@ -28,6 +29,8 @@ class VenueCategoryListAdapter() : ListAdapter<Category, VenueCategoryListAdapte
         init {
             rootView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             rootView.isClickable = false
+            rootView.setTextAppearanceResource(R.style.ChipTextAppearance)
+            rootView.setEnsureMinTouchTargetSize(false)
         }
 
         fun bind(item: Category) {

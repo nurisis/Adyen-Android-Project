@@ -6,6 +6,7 @@ import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.QueryMap
 
@@ -18,7 +19,7 @@ interface PlacesService {
      */
     @Headers("Authorization: ${BuildConfig.API_KEY}")
     @GET("places/nearby")
-    fun getVenueRecommendations(@QueryMap query: Map<String, String>): Call<ResponseWrapper>
+    fun getVenueRecommendations(@QueryMap query: Map<String, String>, @Header("Accept-Language") language: String): Call<ResponseWrapper>
 
     companion object  {
         private val retrofit by lazy {

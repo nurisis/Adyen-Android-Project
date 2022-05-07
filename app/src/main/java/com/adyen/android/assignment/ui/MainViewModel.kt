@@ -42,7 +42,7 @@ class MainViewModel @Inject constructor(
                 )
 
                 uiState.value = if (result?.isNotEmpty() == true) {
-                    MainUIState.PermissionGranted.ShowVenues(list = result)
+                    MainUIState.PermissionGranted.ShowVenues(list = result.sortedBy { it.distance })
                 } else {
                     MainUIState.PermissionGranted.Empty
                 }
