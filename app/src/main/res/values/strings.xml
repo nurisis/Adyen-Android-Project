@@ -5,4 +5,16 @@
     <string name="main_permission_denied_dialog_message">You need to grant location permission to see places around you.</string>
     <string name="main_permission_denied_dialog_positive_button">Setting</string>
     <string name="main_permission_denied_dialog_negative_button">Cancel</string>
+
+    <string name="main_permission_granted_empty_title">No venues around you</string>
+    <string name="main_permission_granted_empty_message">Move to other place and search again!</string>
+    <string name="main_permission_granted_empty_cta">Get current location!</string>
+
+    <string name="main_permission_denied_empty_title">Need location permission</string>
+    <string name="main_permission_denied_empty_message">Allow your location permission, and find venues around you!</string>
+    <string name="main_permission_denied_empty_cta">Go to setting</string>
+
+    <string name="main_error_title">Oops!</string>
+    <string name="main_error_message">Please try again!</string>
+    <string name="main_error_cta">Retry</string>
 </resources>

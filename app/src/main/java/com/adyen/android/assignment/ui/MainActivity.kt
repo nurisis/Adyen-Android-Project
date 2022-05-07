@@ -7,6 +7,7 @@ import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -18,7 +19,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.adyen.android.assignment.R
 import com.adyen.android.assignment.databinding.ActivityMainBinding
-import com.adyen.android.assignment.ui.state.MainState
+import com.adyen.android.assignment.ui.state.MainAction
+import com.adyen.android.assignment.ui.state.MainUIState
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private val locationPermission = Manifest.permission.ACCESS_COARSE_LOCATION
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            handleLocationPermission(isGranted)
+            viewModel.handlePermission(isGranted)
         }
 
     // todo@nurisis: Google play service 설치 여부 체크 https://developers.google.com/android/guides/setup
@@ -54,7 +56,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        getCurrentLocation()
+        viewModel.getCurrentLocation()
     }
 
     private fun observeStates() {
@@ -62,6 +64,26 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
                     handleState(state)
+                }
+            }
+        }
+
+        viewModel.action.observe(this) { action ->
+            when (action) {
+                MainAction.ShowPermissionDialog -> {
+//                    AlertDialog.Builder(this)
+//                        .setMessage(R.string.main_permission_denied_dialog_message)
+//                        .setPositiveButton(R.string.main_permission_denied_dialog_positive_button) { _, _ ->
+//                            // Navigate to app's setting
+//                            goToAppSetting()
+//                        }
+//                        .setNegativeButton(R.string.main_permission_denied_dialog_negative_button) { dialogInterface, _ ->
+//                            dialogInterface.cancel()
+//                        }
+//                        .show()
+                }
+                MainAction.ClickCurrentLocation -> {
+                    getCurrentLocation()
                 }
             }
         }
@@ -78,6 +100,7 @@ class MainActivity : AppCompatActivity() {
             fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
                     // Got last known location. In some rare situations this can be null.
+                    // todo@nurisis: 여기 리스너 중복으로 불리는건 아닌지 체크 필요.
 
                     viewModel.fetchNearByVenues(
                         latitude = location?.latitude,
@@ -90,46 +113,76 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun handleLocationPermission(isGranted: Boolean) {
-        if (isGranted) {
-            getCurrentLocation()
-        } else {
-            AlertDialog.Builder(this)
-                .setMessage(R.string.main_permission_denied_dialog_message)
-                .setPositiveButton(R.string.main_permission_denied_dialog_positive_button) { _, _ ->
-                    // Navigate to app's setting
-                    // todo@nurisis: 여기 코드 개선가능한지 체크 필요
-                    startActivity(
-                        Intent(
-                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                            Uri.parse("package:${packageName}")
-                        ).apply {
-                            addCategory(Intent.CATEGORY_DEFAULT)
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        })
+    private fun handleState(uiState: MainUIState) {
+        println("LOG>> state: $uiState")
+        binding.loadingView.visibility = View.GONE
+
+        when (uiState) {
+            is MainUIState.Uninitialized -> {
+                // todo@nurisis: 상태 처리
+                binding.coordinator.visibility = View.GONE
+                binding.emptyView.visibility = View.GONE
+                binding.currentLocationImageView.visibility = View.GONE
+            }
+            is MainUIState.Loading -> {
+                binding.loadingView.visibility = View.VISIBLE
+            }
+            is MainUIState.Error -> {
+                binding.coordinator.visibility = View.GONE
+                binding.emptyView.visibility = View.VISIBLE
+                binding.currentLocationImageView.visibility = View.GONE
+
+                binding.emptyView.title = getString(R.string.main_error_title)
+                binding.emptyView.message = getString(R.string.main_error_message)
+                binding.emptyView.buttonText = getString(R.string.main_error_cta)
+                binding.emptyView.buttonClickListener = View.OnClickListener {
+                    viewModel.getCurrentLocation()
                 }
-                .setNegativeButton(R.string.main_permission_denied_dialog_negative_button) { dialogInterface, _ ->
-                    dialogInterface.cancel()
+            }
+            is MainUIState.PermissionGranted.Empty -> {
+                binding.coordinator.visibility = View.GONE
+                binding.emptyView.visibility = View.VISIBLE
+                binding.currentLocationImageView.visibility = View.GONE
+
+                binding.emptyView.title = getString(R.string.main_permission_granted_empty_title)
+                binding.emptyView.message = getString(R.string.main_permission_granted_empty_message)
+                binding.emptyView.buttonText = getString(R.string.main_permission_granted_empty_cta)
+                binding.emptyView.buttonClickListener = View.OnClickListener {
+                    viewModel.getCurrentLocation()
                 }
-                .show()
+            }
+            is MainUIState.PermissionGranted.ShowVenues -> {
+                binding.coordinator.visibility = View.VISIBLE
+                binding.emptyView.visibility = View.GONE
+                binding.currentLocationImageView.visibility = View.VISIBLE
+
+                venuesListAdapter?.submitList(uiState.list)
+            }
+            is MainUIState.PermissionDenied -> {
+                binding.coordinator.visibility = View.GONE
+                binding.emptyView.visibility = View.VISIBLE
+                binding.currentLocationImageView.visibility = View.GONE
+
+                binding.emptyView.title = getString(R.string.main_permission_denied_empty_title)
+                binding.emptyView.message = getString(R.string.main_permission_denied_dialog_message)
+                binding.emptyView.buttonText = getString(R.string.main_permission_denied_empty_cta)
+                binding.emptyView.buttonClickListener = View.OnClickListener {
+                    goToAppSetting()
+                }
+            }
         }
     }
 
-    private fun handleState(state: MainState) {
-        when (state) {
-            is MainState.Uninitialized -> {
-                // todo@nurisis: 상태 처리
-            }
-            is MainState.Loading -> {
-                // todo@nurisis: 상태 처리
-            }
-            is MainState.Error -> {
-                // todo@nurisis: 상태 처리
-            }
-            is MainState.ShowVenues -> {
-                venuesListAdapter?.submitList(state.list)
-            }
-        }
+    private fun goToAppSetting() {
+        // todo@nurisis: 여기 코드 개선가능한지 체크 필요
+        startActivity(
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:${packageName}")
+            ).apply {
+                addCategory(Intent.CATEGORY_DEFAULT)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            })
     }
 
     private fun initViews() {
@@ -140,8 +193,8 @@ class MainActivity : AppCompatActivity() {
 
         binding.venuesRecyclerView.adapter = venuesListAdapter
 
-        binding.setCurrentLocationButton.setOnClickListener {
-            getCurrentLocation()
+        binding.currentLocationImageView.setOnClickListener {
+            viewModel.getCurrentLocation()
         }
     }
 

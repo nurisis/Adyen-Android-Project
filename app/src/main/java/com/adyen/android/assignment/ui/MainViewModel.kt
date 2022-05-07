@@ -1,17 +1,18 @@
 package com.adyen.android.assignment.ui
 
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.adyen.android.assignment.api.PlacesService
 import com.adyen.android.assignment.api.VenueRecommendationsQueryBuilder
 import com.adyen.android.assignment.api.model.VenueResult
-import com.adyen.android.assignment.ui.state.MainState
+import com.adyen.android.assignment.ui.state.MainAction
+import com.adyen.android.assignment.ui.state.MainUIState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,28 +23,49 @@ class MainViewModel @Inject constructor() : ViewModel() {
         private const val DEFAULT_LONGITUDE = 4.905890
     }
 
-    val state = MutableStateFlow<MainState>(MainState.Uninitialized)
+    val state = MutableStateFlow<MainUIState>(MainUIState.Uninitialized)
+    val action = MutableLiveData<MainAction>()
 
     fun fetchNearByVenues(latitude: Double?, longitude: Double?) {
-        state.value = MainState.Loading
+        if (latitude == null || longitude == null) {
+            state.value = MainUIState.Error.CurrentLocationFail
+            return
+        }
+
+        state.value = MainUIState.Loading
 
         viewModelScope.launch {
             try {
                 state.value = getVenues(
-                    latitude = latitude ?: DEFAULT_LATITUDE,
-                    longitude = longitude ?: DEFAULT_LONGITUDE
+                    latitude = latitude,
+                    longitude = longitude
                 )?.let { list ->
-                    MainState.ShowVenues(list = list)
-                } ?: MainState.Error
+                    if (list.isEmpty()) {
+                        MainUIState.PermissionGranted.Empty
+                    } else MainUIState.PermissionGranted.ShowVenues(list = list)
+                } ?: MainUIState.PermissionGranted.Empty
 
             } catch (e: Exception) {
-                state.value = MainState.Error
+                state.value = MainUIState.Error.General
             }
 
         }
     }
 
-    @Throws(IOException::class)
+    // todo@nurisis: 음 여기 개선 필요
+    fun getCurrentLocation() {
+        action.value = MainAction.ClickCurrentLocation
+    }
+
+    fun handlePermission(isGranted: Boolean) {
+        if (isGranted) {
+            action.value = MainAction.ClickCurrentLocation
+        } else {
+            state.value = MainUIState.PermissionDenied
+            action.value = MainAction.ShowPermissionDialog
+        }
+    }
+
     private suspend fun getVenues(latitude: Double, longitude: Double): List<VenueResult>? =
         withContext(Dispatchers.IO) {
             val query = VenueRecommendationsQueryBuilder()
