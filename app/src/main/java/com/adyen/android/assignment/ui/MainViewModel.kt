@@ -4,10 +4,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.adyen.android.assignment.api.VenueRecommendationsUseCase
-import com.adyen.android.assignment.ui.state.MainAction
-import com.adyen.android.assignment.ui.state.MainUIState
+import com.adyen.android.assignment.ui.state.MainState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,21 +15,18 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
-        private const val DEFAULT_LATITUDE = 52.376510
-        private const val DEFAULT_LONGITUDE = 4.905890
         private const val VENUE_RESULT_LIMIT = 50
     }
 
-    val uiState = MutableStateFlow<MainUIState>(MainUIState.Uninitialized)
-    val action = MutableLiveData<MainAction>()
+    val state = MutableLiveData<MainState>(MainState.Uninitialized)
 
     fun fetchNearByVenues(latitude: Double?, longitude: Double?) {
         if (latitude == null || longitude == null) {
-            uiState.value = MainUIState.Error.CurrentLocationFail
+            state.value = MainState.Error.CurrentLocationFail
             return
         }
 
-        uiState.value = MainUIState.Loading
+        state.value = MainState.Loading
 
         viewModelScope.launch {
             try {
@@ -41,30 +36,24 @@ class MainViewModel @Inject constructor(
                     limit = VENUE_RESULT_LIMIT
                 )
 
-                uiState.value = if (result?.isNotEmpty() == true) {
-                    MainUIState.PermissionGranted.ShowVenues(list = result.sortedBy { it.distance })
+                state.value = if (result?.isNotEmpty() == true) {
+                    MainState.PermissionGranted.ShowVenues(list = result.sortedBy { it.distance })
                 } else {
-                    MainUIState.PermissionGranted.Empty
+                    MainState.PermissionGranted.Empty
                 }
 
             } catch (e: Exception) {
-                uiState.value = MainUIState.Error.General
+                state.value = MainState.Error.General
             }
 
         }
     }
 
-    // todo@nurisis: 음 여기 개선 필요
-    fun getCurrentLocation() {
-        action.value = MainAction.ClickCurrentLocation
-    }
-
-    fun handlePermission(isGranted: Boolean) {
+    fun setLocationPermissionGranted(isGranted: Boolean) {
         if (isGranted) {
-            action.value = MainAction.ClickCurrentLocation
+            state.value = MainState.GetCurrentLocation
         } else {
-            uiState.value = MainUIState.PermissionDenied
-            action.value = MainAction.ShowPermissionDialog
+            state.value = MainState.PermissionDenied
         }
     }
 }

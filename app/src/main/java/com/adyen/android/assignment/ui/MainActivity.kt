@@ -5,25 +5,22 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.adyen.android.assignment.R
 import com.adyen.android.assignment.databinding.ActivityMainBinding
 import com.adyen.android.assignment.ui.adapter.VenuesListAdapter
-import com.adyen.android.assignment.ui.state.MainAction
-import com.adyen.android.assignment.ui.state.MainUIState
+import com.adyen.android.assignment.ui.state.MainState
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -32,10 +29,16 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private val venuesListAdapter: VenuesListAdapter by lazy { VenuesListAdapter() }
 
-    private val locationPermission = Manifest.permission.ACCESS_COARSE_LOCATION
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            viewModel.handlePermission(isGranted)
+    private val requestFineLocationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            viewModel.setLocationPermissionGranted(isGranted = isGranted || isPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION))
+        }
+
+    private val requestLocationPermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            viewModel.setLocationPermissionGranted(
+                isGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true || permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            )
         }
 
     // todo@nurisis: Google play service 설치 여부 체크 https://developers.google.com/android/guides/setup
@@ -55,119 +58,137 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        viewModel.getCurrentLocation()
+        checkLocationPermissions()
     }
 
     private fun observeStates() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    handleState(state)
+        viewModel.state.observe(this) { state ->
+            handleState(state)
+        }
+    }
+
+    private fun checkLocationPermissions() {
+        when {
+            /**
+             * Case 1. Grant Precise Location
+             */
+            isPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION) &&
+                isPermissionGranted(
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) -> {
+                viewModel.setLocationPermissionGranted(isGranted = true)
+            }
+            /**
+             * Case 2. Grant Approximate Location
+             * */
+            isPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION) -> {
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                    shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
+                ) {
+                    AlertDialog.Builder(this)
+                        .setMessage(R.string.main_fine_location_permission_dialog_message)
+                        .setPositiveButton(R.string.main_fine_location_permission_dialog_positive_button) { _, _ ->
+                            // request permission again
+                            requestFineLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        }
+                        .setCancelable(false)
+                        .show()
+                } else {
+                    viewModel.setLocationPermissionGranted(isGranted = true)
                 }
             }
-        }
-
-        viewModel.action.observe(this) { action ->
-            when (action) {
-                MainAction.ShowPermissionDialog -> {
-//                    AlertDialog.Builder(this)
-//                        .setMessage(R.string.main_permission_denied_dialog_message)
-//                        .setPositiveButton(R.string.main_permission_denied_dialog_positive_button) { _, _ ->
-//                            // Navigate to app's setting
-//                            goToAppSetting()
-//                        }
-//                        .setNegativeButton(R.string.main_permission_denied_dialog_negative_button) { dialogInterface, _ ->
-//                            dialogInterface.cancel()
-//                        }
-//                        .show()
-                }
-                MainAction.ClickCurrentLocation -> {
-                    getCurrentLocation()
-                }
+            /**
+             * Case 3. All denied
+             * */
+            else -> {
+                requestLocationPermissionsLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )
+                )
             }
         }
     }
 
     private fun getCurrentLocation() {
-        // check permission
-        if (ContextCompat.checkSelfPermission(
-                this,
-                locationPermission
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
 
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    // Got last known location. In some rare situations this can be null.
-                    // todo@nurisis: 여기 리스너 중복으로 불리는건 아닌지 체크 필요.
-
-                    viewModel.fetchNearByVenues(
-                        latitude = location?.latitude,
-                        longitude = location?.longitude
-                    )
-                }
-
-        } else {
-            requestPermissionLauncher.launch(locationPermission)
+                viewModel.fetchNearByVenues(
+                    latitude = location?.latitude,
+                    longitude = location?.longitude
+                )
+            }
+        } catch (e: SecurityException) {
+            checkLocationPermissions()
         }
     }
 
-    private fun handleState(uiState: MainUIState) {
+    private fun isPermissionGranted(permission: String): Boolean =
+        ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+
+    private fun handleState(state: MainState) {
         binding.loadingView.visibility = View.GONE
 
-        when (uiState) {
-            is MainUIState.Uninitialized -> {
-                // todo@nurisis: 상태 처리
+        when (state) {
+            is MainState.Uninitialized -> {
                 binding.coordinator.visibility = View.GONE
                 binding.emptyView.visibility = View.GONE
                 binding.currentLocationImageView.visibility = View.GONE
             }
-            is MainUIState.Loading -> {
+            is MainState.Loading -> {
                 binding.loadingView.visibility = View.VISIBLE
             }
-            is MainUIState.PermissionGranted.Empty -> {
+            is MainState.PermissionGranted.Empty -> {
                 binding.coordinator.visibility = View.GONE
                 binding.emptyView.visibility = View.VISIBLE
                 binding.currentLocationImageView.visibility = View.GONE
 
                 binding.emptyView.title = getString(R.string.main_permission_granted_empty_title)
-                binding.emptyView.message = getString(R.string.main_permission_granted_empty_message)
+                binding.emptyView.message =
+                    getString(R.string.main_permission_granted_empty_message)
                 binding.emptyView.buttonText = getString(R.string.main_permission_granted_empty_cta)
                 binding.emptyView.buttonClickListener = View.OnClickListener {
-                    viewModel.getCurrentLocation()
+                    checkLocationPermissions()
                 }
             }
-            is MainUIState.PermissionGranted.ShowVenues -> {
+            is MainState.PermissionGranted.ShowVenues -> {
                 binding.coordinator.visibility = View.VISIBLE
                 binding.emptyView.visibility = View.GONE
                 binding.currentLocationImageView.visibility = View.VISIBLE
 
-                venuesListAdapter?.submitList(uiState.list)
+                venuesListAdapter.submitList(state.list)
             }
-            is MainUIState.PermissionDenied -> {
+            is MainState.PermissionDenied -> {
                 binding.coordinator.visibility = View.GONE
                 binding.emptyView.visibility = View.VISIBLE
                 binding.currentLocationImageView.visibility = View.GONE
 
                 binding.emptyView.title = getString(R.string.main_permission_denied_empty_title)
-                binding.emptyView.message = getString(R.string.main_permission_denied_dialog_message)
+                binding.emptyView.message =
+                    getString(R.string.main_fine_location_permission_dialog_message)
                 binding.emptyView.buttonText = getString(R.string.main_permission_denied_empty_cta)
                 binding.emptyView.buttonClickListener = View.OnClickListener {
                     goToAppSetting()
                 }
             }
-            is MainUIState.Error -> {
+            is MainState.GetCurrentLocation -> {
+                getCurrentLocation()
+            }
+            is MainState.Error -> {
                 binding.coordinator.visibility = View.GONE
                 binding.emptyView.visibility = View.VISIBLE
                 binding.currentLocationImageView.visibility = View.GONE
 
                 binding.emptyView.title = getString(R.string.main_error_title)
-                binding.emptyView.message = if (uiState is MainUIState.Error.CurrentLocationFail) {
+                binding.emptyView.message = if (state is MainState.Error.CurrentLocationFail) {
                     getString(R.string.main_error_get_current_location_message)
                 } else getString(R.string.main_error_message)
                 binding.emptyView.buttonText = getString(R.string.main_error_cta)
                 binding.emptyView.buttonClickListener = View.OnClickListener {
-                    viewModel.getCurrentLocation()
+                    checkLocationPermissions()
                 }
             }
         }
@@ -189,7 +210,7 @@ class MainActivity : AppCompatActivity() {
         binding.venuesRecyclerView.adapter = venuesListAdapter
 
         binding.currentLocationImageView.setOnClickListener {
-            viewModel.getCurrentLocation()
+            checkLocationPermissions()
         }
     }
 

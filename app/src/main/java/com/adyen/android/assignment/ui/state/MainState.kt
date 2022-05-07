@@ -2,23 +2,25 @@ package com.adyen.android.assignment.ui.state
 
 import com.adyen.android.assignment.api.model.VenueResult
 
-sealed class MainUIState {
-    object Uninitialized : MainUIState()
+sealed class MainState {
+    object Uninitialized : MainState()
 
-    object Loading : MainUIState()
+    object Loading : MainState()
 
-    object PermissionDenied : MainUIState()
+    object GetCurrentLocation : MainState()
 
-    sealed class PermissionGranted : MainUIState() {
+    object PermissionDenied : MainState()
+
+    sealed class PermissionGranted : MainState() {
 
         object Empty : PermissionGranted()
 
         data class ShowVenues(
             val list: List<VenueResult>
-        ) : MainUIState()
+        ) : MainState()
     }
 
-    sealed class Error : MainUIState() {
+    sealed class Error : MainState() {
         object General : Error()
 
         object CurrentLocationFail : Error()

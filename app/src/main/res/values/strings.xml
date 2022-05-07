@@ -2,9 +2,9 @@
     <string name="app_name">Android Assignment</string>
 
     <string name="main_set_your_location">Set your location!</string>
-    <string name="main_permission_denied_dialog_message">You need to grant location permission to see places around you.</string>
-    <string name="main_permission_denied_dialog_positive_button">Setting</string>
-    <string name="main_permission_denied_dialog_negative_button">Cancel</string>
+    <string name="main_fine_location_permission_dialog_message">Allow the Precise Location permission to get more useful information :) </string>
+    <string name="main_fine_location_permission_dialog_positive_button">Okay</string>
+    <string name="main_fine_location_permission_dialog_negative_button">Cancel</string>
 
     <string name="main_permission_granted_empty_title">No venues around you</string>
     <string name="main_permission_granted_empty_message">Move to other place and search again!</string>
