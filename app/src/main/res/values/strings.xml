@@ -16,5 +16,6 @@
 
     <string name="main_error_title">Oops!</string>
     <string name="main_error_message">Please try again!</string>
+    <string name="main_error_get_current_location_message">Failed to get current location. Please try again!</string>
     <string name="main_error_cta">Retry</string>
 </resources>

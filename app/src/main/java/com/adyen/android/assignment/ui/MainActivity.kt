@@ -11,7 +11,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -62,7 +61,7 @@ class MainActivity : AppCompatActivity() {
     private fun observeStates() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.state.collect { state ->
+                viewModel.uiState.collect { state ->
                     handleState(state)
                 }
             }
@@ -114,7 +113,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleState(uiState: MainUIState) {
-        println("LOG>> state: $uiState")
         binding.loadingView.visibility = View.GONE
 
         when (uiState) {
@@ -126,18 +124,6 @@ class MainActivity : AppCompatActivity() {
             }
             is MainUIState.Loading -> {
                 binding.loadingView.visibility = View.VISIBLE
-            }
-            is MainUIState.Error -> {
-                binding.coordinator.visibility = View.GONE
-                binding.emptyView.visibility = View.VISIBLE
-                binding.currentLocationImageView.visibility = View.GONE
-
-                binding.emptyView.title = getString(R.string.main_error_title)
-                binding.emptyView.message = getString(R.string.main_error_message)
-                binding.emptyView.buttonText = getString(R.string.main_error_cta)
-                binding.emptyView.buttonClickListener = View.OnClickListener {
-                    viewModel.getCurrentLocation()
-                }
             }
             is MainUIState.PermissionGranted.Empty -> {
                 binding.coordinator.visibility = View.GONE
@@ -168,6 +154,20 @@ class MainActivity : AppCompatActivity() {
                 binding.emptyView.buttonText = getString(R.string.main_permission_denied_empty_cta)
                 binding.emptyView.buttonClickListener = View.OnClickListener {
                     goToAppSetting()
+                }
+            }
+            is MainUIState.Error -> {
+                binding.coordinator.visibility = View.GONE
+                binding.emptyView.visibility = View.VISIBLE
+                binding.currentLocationImageView.visibility = View.GONE
+
+                binding.emptyView.title = getString(R.string.main_error_title)
+                binding.emptyView.message = if (uiState is MainUIState.Error.CurrentLocationFail) {
+                    getString(R.string.main_error_get_current_location_message)
+                } else getString(R.string.main_error_message)
+                binding.emptyView.buttonText = getString(R.string.main_error_cta)
+                binding.emptyView.buttonClickListener = View.OnClickListener {
+                    viewModel.getCurrentLocation()
                 }
             }
         }
