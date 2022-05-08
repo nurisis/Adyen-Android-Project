@@ -1,6 +1,10 @@
 <resources>
     <string name="app_name">Android Assignment</string>
 
+    <string name="main_title">Find places around your location 🧐</string>
+
+    <string name="main_item_distance">%dm away from you 😊</string>
+
     <string name="main_set_your_location">Set your location!</string>
     <string name="main_fine_location_permission_dialog_message">Allow the Precise Location permission to get more useful information :) </string>
     <string name="main_fine_location_permission_dialog_positive_button">Okay</string>

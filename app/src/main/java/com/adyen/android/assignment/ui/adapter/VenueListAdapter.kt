@@ -1,12 +1,15 @@
 package com.adyen.android.assignment.ui.adapter
 
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.adyen.android.assignment.R
 import com.adyen.android.assignment.api.model.VenueResult
 import com.adyen.android.assignment.databinding.ItemVenueBinding
+import com.adyen.android.assignment.widget.HorizontalSpacingItemDecoration
 
 class VenueListAdapter : ListAdapter<VenueResult, VenueListAdapter.VenueHolder>(
     VenueDiffCallback()
@@ -30,12 +33,22 @@ class VenueListAdapter : ListAdapter<VenueResult, VenueListAdapter.VenueHolder>(
 
         init {
             binding.categoryRecyclerView.adapter = categoryListAdapter
+            binding.categoryRecyclerView.addItemDecoration(
+                HorizontalSpacingItemDecoration(
+                    space = TypedValue.applyDimension(
+                        TypedValue.COMPLEX_UNIT_DIP,
+                        10f,
+                        binding.root.context.resources.displayMetrics
+                    ).toInt()
+                )
+            )
         }
 
         fun bind(item: VenueResult) {
             binding.name.text = item.name
             binding.address.text = item.location.formatted_address
-            binding.distance.text = "${item.distance}m away from you \uD83D\uDE0A"
+            binding.distance.text =
+                binding.root.context.getString(R.string.main_item_distance, item.distance)
 
             categoryListAdapter.submitList(item.categories)
         }

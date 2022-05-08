@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.adyen.android.assignment.R
 import com.adyen.android.assignment.databinding.ActivityMainBinding
 import com.adyen.android.assignment.ui.adapter.VenueListAdapter
@@ -144,7 +145,7 @@ class MainActivity : AppCompatActivity() {
 
         when (state) {
             is MainState.Uninitialized -> {
-                binding.coordinator.visibility = View.GONE
+                binding.venuesRecyclerView.visibility = View.GONE
                 binding.emptyView.visibility = View.GONE
                 binding.currentLocationImageView.visibility = View.GONE
             }
@@ -152,7 +153,7 @@ class MainActivity : AppCompatActivity() {
                 binding.loadingView.visibility = View.VISIBLE
             }
             is MainState.PermissionGranted.Empty -> {
-                binding.coordinator.visibility = View.GONE
+                binding.venuesRecyclerView.visibility = View.GONE
                 binding.emptyView.visibility = View.VISIBLE
                 binding.currentLocationImageView.visibility = View.GONE
 
@@ -165,17 +166,18 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             is MainState.PermissionGranted.ShowVenues -> {
-                binding.coordinator.visibility = View.VISIBLE
+                binding.venuesRecyclerView.visibility = View.VISIBLE
                 binding.emptyView.visibility = View.GONE
                 binding.currentLocationImageView.visibility = View.VISIBLE
 
                 venueListAdapter.submitList(state.list) {
                     state.scrollPosition?.let {
-                        binding.venuesRecyclerView.scrollToPosition(it) }
+                        binding.venuesRecyclerView.scrollToPosition(it)
+                    }
                 }
             }
             is MainState.PermissionDenied -> {
-                binding.coordinator.visibility = View.GONE
+                binding.venuesRecyclerView.visibility = View.GONE
                 binding.emptyView.visibility = View.VISIBLE
                 binding.currentLocationImageView.visibility = View.GONE
 
@@ -191,7 +193,7 @@ class MainActivity : AppCompatActivity() {
                 getCurrentLocation()
             }
             is MainState.Error -> {
-                binding.coordinator.visibility = View.GONE
+                binding.venuesRecyclerView.visibility = View.GONE
                 binding.emptyView.visibility = View.VISIBLE
                 binding.currentLocationImageView.visibility = View.GONE
 
@@ -221,18 +223,34 @@ class MainActivity : AppCompatActivity() {
 
     private fun initViews() {
         binding.venuesRecyclerView.adapter = venueListAdapter
+        binding.venuesRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+
+                binding.scrollTopImageView.visibility = if (recyclerView.canScrollVertically(-1)) {
+                    View.VISIBLE
+                } else View.GONE
+            }
+
+        })
 
         binding.currentLocationImageView.setOnClickListener {
             checkLocationPermissions()
+        }
+
+        binding.scrollTopImageView.setOnClickListener {
+            binding.venuesRecyclerView.smoothScrollToPosition(0)
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
-        (binding.venuesRecyclerView.layoutManager as? LinearLayoutManager)?.findFirstCompletelyVisibleItemPosition()?.let {
-            outState.putInt(scrollPositionKey, it)
-        }
+        (binding.venuesRecyclerView.layoutManager as? LinearLayoutManager)?.findFirstCompletelyVisibleItemPosition()
+            ?.let {
+                outState.putInt(scrollPositionKey, it)
+            }
     }
 
 }
