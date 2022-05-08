@@ -17,13 +17,12 @@ sealed class MainState {
 
         data class ShowVenues(
             val list: List<VenueResult>,
-            val scrollPosition: Int?
         ) : MainState()
     }
 
     sealed class Error : MainState() {
         object General : Error()
 
-        object CurrentLocationFail : Error()
+        object CurrentLocationFailed : Error()
     }
 }

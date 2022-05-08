@@ -1,5 +1,7 @@
-package com.adyen.android.assignment.api
+package com.adyen.android.assignment.api.usecase
 
+import com.adyen.android.assignment.api.PlacesService
+import com.adyen.android.assignment.api.VenueRecommendationsQueryBuilder
 import com.adyen.android.assignment.api.model.VenueResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

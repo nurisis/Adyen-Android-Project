@@ -13,7 +13,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.mockito.MockitoAnnotations
 
-abstract class ViewModelTest {
+abstract class BaseViewModelTest {
 
     @get:Rule
     val instantExecutorRule = InstantTaskExecutorRule()

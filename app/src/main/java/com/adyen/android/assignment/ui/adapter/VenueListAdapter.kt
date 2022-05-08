@@ -60,10 +60,7 @@ private class VenueDiffCallback : DiffUtil.ItemCallback<VenueResult>() {
         return oldItem == newItem
     }
 
-    override fun areContentsTheSame(
-        oldItem: VenueResult,
-        newItem: VenueResult
-    ): Boolean {
+    override fun areContentsTheSame(oldItem: VenueResult, newItem: VenueResult): Boolean {
         return oldItem == newItem
     }
 }

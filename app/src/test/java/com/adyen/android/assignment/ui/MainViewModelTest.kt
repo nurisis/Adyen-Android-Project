@@ -1,11 +1,11 @@
 package com.adyen.android.assignment.ui
 
-import com.adyen.android.assignment.api.VenueRecommendationsUseCase
+import com.adyen.android.assignment.api.usecase.VenueRecommendationsUseCase
 import com.adyen.android.assignment.api.model.GeoCode
 import com.adyen.android.assignment.api.model.Location
 import com.adyen.android.assignment.api.model.Main
 import com.adyen.android.assignment.api.model.VenueResult
-import com.adyen.android.assignment.base.ViewModelTest
+import com.adyen.android.assignment.base.BaseViewModelTest
 import com.adyen.android.assignment.ui.state.MainState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -16,7 +16,7 @@ import org.mockito.Mockito
 import java.io.IOException
 
 @ExperimentalCoroutinesApi
-class MainViewModelTest : ViewModelTest() {
+class MainViewModelTest : BaseViewModelTest() {
 
     private lateinit var viewModel: MainViewModel
 
@@ -57,7 +57,7 @@ class MainViewModelTest : ViewModelTest() {
                     MainState.Uninitialized,
                     MainState.GetCurrentLocation,
                     MainState.Loading,
-                    MainState.PermissionGranted.ShowVenues(list = mockResult, scrollPosition = null)
+                    MainState.PermissionGranted.ShowVenues(list = mockResult)
                 )
             )
         }
@@ -135,7 +135,7 @@ class MainViewModelTest : ViewModelTest() {
             listOf(
                 MainState.Uninitialized,
                 MainState.GetCurrentLocation,
-                MainState.Error.CurrentLocationFail,
+                MainState.Error.CurrentLocationFailed,
             )
         )
     }

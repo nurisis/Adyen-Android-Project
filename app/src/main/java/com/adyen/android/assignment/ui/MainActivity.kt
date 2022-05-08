@@ -35,6 +35,9 @@ class MainActivity : AppCompatActivity() {
 
     private val scrollPositionKey = "KEY_SCROLL_POSITION"
 
+    // Remember scroll position of the list for configuration changes
+    private var scrollPosition: Int? = null
+
     private val requestFineLocationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             viewModel.setLocationPermissionGranted(
@@ -58,12 +61,12 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
         initViews()
         observeStates()
 
-        viewModel.setScrollPosition(savedInstanceState?.getInt(scrollPositionKey))
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        scrollPosition = savedInstanceState?.getInt(scrollPositionKey)
     }
 
     override fun onStart() {
@@ -84,9 +87,7 @@ class MainActivity : AppCompatActivity() {
              * Case 1. Grant Precise Location
              */
             isPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION) &&
-                isPermissionGranted(
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) -> {
+                isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION) -> {
                 viewModel.setLocationPermissionGranted(isGranted = true)
             }
             /**
@@ -154,6 +155,9 @@ class MainActivity : AppCompatActivity() {
             is MainState.Loading -> {
                 binding.loadingView.visibility = View.VISIBLE
             }
+            is MainState.GetCurrentLocation -> {
+                getCurrentLocation()
+            }
             is MainState.PermissionGranted.Empty -> {
                 showEmptyView(
                     titleResId = R.string.main_permission_granted_empty_title,
@@ -161,18 +165,20 @@ class MainActivity : AppCompatActivity() {
                     imageResId = R.drawable.ic_refresh_48,
                     buttonTextResId = R.string.retry,
                     buttonClickListener = {
-                        checkLocationPermissions()
+                        getCurrentLocation()
                     }
                 )
             }
             is MainState.PermissionGranted.ShowVenues -> {
                 binding.venuesRecyclerView.visibility = View.VISIBLE
-                binding.emptyView.visibility = View.GONE
                 binding.currentLocationImageView.visibility = View.VISIBLE
+                binding.emptyView.visibility = View.GONE
 
                 venueListAdapter.submitList(state.list) {
-                    state.scrollPosition?.let {
+                    scrollPosition?.let {
                         binding.venuesRecyclerView.scrollToPosition(it)
+
+                        scrollPosition = null
                     }
                 }
             }
@@ -187,13 +193,10 @@ class MainActivity : AppCompatActivity() {
                     }
                 )
             }
-            is MainState.GetCurrentLocation -> {
-                getCurrentLocation()
-            }
             is MainState.Error -> {
                 showEmptyView(
                     titleResId = R.string.main_error_title,
-                    messageResId = if (state is MainState.Error.CurrentLocationFail) {
+                    messageResId = if (state is MainState.Error.CurrentLocationFailed) {
                         R.string.main_error_get_current_location_message
                     } else R.string.main_error_message,
                     imageResId = R.drawable.ic_refresh_48,
@@ -225,19 +228,25 @@ class MainActivity : AppCompatActivity() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
 
-                binding.scrollTopImageView.visibility = if (recyclerView.canScrollVertically(-1)) {
-                    View.VISIBLE
-                } else View.GONE
+                setScrollTopIconVisibility()
             }
-
         })
 
         binding.currentLocationImageView.setOnClickListener {
             checkLocationPermissions()
         }
 
+        setScrollTopIconVisibility()
         binding.scrollTopImageView.setOnClickListener {
             binding.venuesRecyclerView.smoothScrollToPosition(0)
+        }
+    }
+
+    private fun setScrollTopIconVisibility() {
+        if (binding.venuesRecyclerView.canScrollVertically(-1)) {
+            binding.scrollTopImageView.visibility = View.VISIBLE
+        } else {
+            binding.scrollTopImageView.visibility = View.GONE
         }
     }
 

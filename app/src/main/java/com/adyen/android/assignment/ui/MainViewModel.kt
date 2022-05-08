@@ -4,7 +4,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.adyen.android.assignment.api.VenueRecommendationsUseCase
+import com.adyen.android.assignment.api.usecase.VenueRecommendationsUseCase
 import com.adyen.android.assignment.ui.state.MainState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -16,17 +16,15 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
-        @VisibleForTesting const val VENUE_RESULT_LIMIT = 50
+        @VisibleForTesting
+        const val VENUE_RESULT_LIMIT = 50
     }
 
     val state = MutableLiveData<MainState>(MainState.Uninitialized)
 
-    // Remember scroll position of the list for configuration changes
-    private var scrollPosition : Int? = null
-
     fun fetchNearByVenues(latitude: Double?, longitude: Double?) {
         if (latitude == null || longitude == null) {
-            state.value = MainState.Error.CurrentLocationFail
+            state.value = MainState.Error.CurrentLocationFailed
             return
         }
 
@@ -43,13 +41,10 @@ class MainViewModel @Inject constructor(
                 state.value = if (result?.isNotEmpty() == true) {
                     MainState.PermissionGranted.ShowVenues(
                         list = result.sortedBy { it.distance },
-                        scrollPosition = scrollPosition
                     )
                 } else {
                     MainState.PermissionGranted.Empty
                 }
-
-                setScrollPosition(null)
 
             } catch (e: Exception) {
                 state.value = MainState.Error.General
@@ -63,10 +58,6 @@ class MainViewModel @Inject constructor(
         } else {
             state.value = MainState.PermissionDenied
         }
-    }
-
-    fun setScrollPosition(position: Int?) {
-        scrollPosition = position
     }
 
 }
