@@ -15,7 +15,7 @@
     <string name="main_permission_denied_empty_cta">Setting Permissions</string>
 
     <string name="main_error_title">Oops!</string>
-    <string name="main_error_message">A error has occurred. Please try again.</string>
+    <string name="main_error_message">An error has occurred. Please try again.</string>
     <string name="main_error_get_current_location_message">An error occurred while getting the current location. Please try again!</string>
 
     <string name="retry">Retry</string>

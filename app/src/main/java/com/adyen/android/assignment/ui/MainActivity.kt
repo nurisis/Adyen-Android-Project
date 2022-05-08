@@ -159,6 +159,7 @@ class MainActivity : AppCompatActivity() {
                 binding.venuesRecyclerView.visibility = View.GONE
                 binding.emptyView.visibility = View.GONE
                 binding.currentLocationImageView.visibility = View.GONE
+                binding.scrollTopImageView.visibility = View.GONE
                 binding.collapsingToolbarLayout.visibility = View.GONE
             }
             is MainState.Loading -> {
@@ -181,6 +182,7 @@ class MainActivity : AppCompatActivity() {
             is MainState.PermissionGranted.ShowVenues -> {
                 binding.venuesRecyclerView.visibility = View.VISIBLE
                 binding.currentLocationImageView.visibility = View.VISIBLE
+                binding.scrollTopImageView.visibility = View.VISIBLE
                 binding.collapsingToolbarLayout.visibility = View.VISIBLE
                 binding.emptyView.visibility = View.GONE
 
@@ -305,10 +307,14 @@ class MainActivity : AppCompatActivity() {
         @StringRes buttonTextResId: Int,
         buttonClickListener: View.OnClickListener,
     ) {
+        binding.venuesRecyclerView.scrollToPosition(0)
+        binding.appBarLayout.setExpanded(true)
+
         binding.emptyView.visibility = View.VISIBLE
         binding.venuesRecyclerView.visibility = View.GONE
         binding.currentLocationImageView.visibility = View.GONE
         binding.collapsingToolbarLayout.visibility = View.GONE
+        binding.scrollTopImageView.visibility = View.GONE
 
         binding.emptyView.title = getString(titleResId)
         binding.emptyView.message = getString(messageResId)
