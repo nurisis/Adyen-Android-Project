@@ -17,7 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.adyen.android.assignment.R
 import com.adyen.android.assignment.databinding.ActivityMainBinding
-import com.adyen.android.assignment.ui.adapter.VenuesListAdapter
+import com.adyen.android.assignment.ui.adapter.VenueListAdapter
 import com.adyen.android.assignment.ui.state.MainState
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
-    private val venuesListAdapter: VenuesListAdapter by lazy { VenuesListAdapter() }
+    private val venueListAdapter: VenueListAdapter by lazy { VenueListAdapter() }
 
     private val scrollPositionKey = "KEY_SCROLL_POSITION"
 
@@ -48,7 +48,6 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-    // todo@nurisis: Google play service 설치 여부 체크 https://developers.google.com/android/guides/setup
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,6 +94,7 @@ class MainActivity : AppCompatActivity() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
                     shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
                 ) {
+
                     AlertDialog.Builder(this)
                         .setMessage(R.string.main_fine_location_permission_dialog_message)
                         .setPositiveButton(R.string.main_fine_location_permission_dialog_positive_button) { _, _ ->
@@ -103,6 +103,7 @@ class MainActivity : AppCompatActivity() {
                         }
                         .setCancelable(false)
                         .show()
+
                 } else {
                     viewModel.setLocationPermissionGranted(isGranted = true)
                 }
@@ -168,7 +169,7 @@ class MainActivity : AppCompatActivity() {
                 binding.emptyView.visibility = View.GONE
                 binding.currentLocationImageView.visibility = View.VISIBLE
 
-                venuesListAdapter.submitList(state.list) {
+                venueListAdapter.submitList(state.list) {
                     state.scrollPosition?.let {
                         binding.venuesRecyclerView.scrollToPosition(it) }
                 }
@@ -219,7 +220,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        binding.venuesRecyclerView.adapter = venuesListAdapter
+        binding.venuesRecyclerView.adapter = venueListAdapter
 
         binding.currentLocationImageView.setOnClickListener {
             checkLocationPermissions()

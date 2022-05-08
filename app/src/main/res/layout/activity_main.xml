@@ -54,7 +54,7 @@
         app:tint="@color/teal_400"
         android:layout_margin="24dp"/>
 
-    <com.adyen.android.assignment.ui.widget.EmptyViewNormal
+    <com.adyen.android.assignment.widget.EmptyViewNormal
         android:id="@+id/emptyView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

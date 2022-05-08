@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.adyen.android.assignment.api.model.VenueResult
 import com.adyen.android.assignment.databinding.ItemVenueBinding
 
-class VenuesListAdapter : ListAdapter<VenueResult, VenuesListAdapter.VenueHolder>(
+class VenueListAdapter : ListAdapter<VenueResult, VenueListAdapter.VenueHolder>(
     VenueDiffCallback()
 ) {
 

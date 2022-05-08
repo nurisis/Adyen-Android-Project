@@ -1,7 +1,7 @@
 package com.adyen.android.assignment.ui
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.adyen.android.assignment.api.VenueRecommendationsUseCase
@@ -16,14 +16,13 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
-        private const val VENUE_RESULT_LIMIT = 50
+        @VisibleForTesting const val VENUE_RESULT_LIMIT = 50
     }
 
     val state = MutableLiveData<MainState>(MainState.Uninitialized)
 
     // Remember scroll position of the list for configuration changes
-    var scrollPosition : Int? = null
-        private set
+    private var scrollPosition : Int? = null
 
     fun fetchNearByVenues(latitude: Double?, longitude: Double?) {
         if (latitude == null || longitude == null) {
@@ -51,6 +50,7 @@ class MainViewModel @Inject constructor(
                 }
 
                 setScrollPosition(null)
+
             } catch (e: Exception) {
                 state.value = MainState.Error.General
             }

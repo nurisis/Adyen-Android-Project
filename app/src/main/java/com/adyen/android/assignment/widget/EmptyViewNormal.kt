@@ -1,4 +1,4 @@
-package com.adyen.android.assignment.ui.widget
+package com.adyen.android.assignment.widget
 
 import android.content.Context
 import android.graphics.drawable.Drawable
