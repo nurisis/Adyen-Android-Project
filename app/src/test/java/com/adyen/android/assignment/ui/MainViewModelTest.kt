@@ -1,10 +1,8 @@
 package com.adyen.android.assignment.ui
 
+import androidx.lifecycle.SavedStateHandle
+import com.adyen.android.assignment.api.model.*
 import com.adyen.android.assignment.api.usecase.VenueRecommendationsUseCase
-import com.adyen.android.assignment.api.model.GeoCode
-import com.adyen.android.assignment.api.model.Location
-import com.adyen.android.assignment.api.model.Main
-import com.adyen.android.assignment.api.model.VenueResult
 import com.adyen.android.assignment.base.BaseViewModelTest
 import com.adyen.android.assignment.ui.state.MainState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,7 +13,6 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import java.io.IOException
 
-@ExperimentalCoroutinesApi
 class MainViewModelTest : BaseViewModelTest() {
 
     private lateinit var viewModel: MainViewModel
@@ -23,10 +20,14 @@ class MainViewModelTest : BaseViewModelTest() {
     @Mock
     lateinit var venueRecommendationsUseCase: VenueRecommendationsUseCase
 
+    @Mock
+    lateinit var savedStateHandle: SavedStateHandle
+
     @Before
     fun initViewModel() {
         viewModel = MainViewModel(
-            venueRecommendationsUseCase
+            venueRecommendationsUseCase,
+            savedStateHandle
         )
     }
 
@@ -57,7 +58,15 @@ class MainViewModelTest : BaseViewModelTest() {
                     MainState.Uninitialized,
                     MainState.GetCurrentLocation,
                     MainState.Loading,
-                    MainState.PermissionGranted.ShowVenues(list = mockResult)
+                    MainState.PermissionGranted.ShowVenues(
+                        list = mockResult,
+                        selectedCategoryId = null,
+                        categoryList = listOf(
+                            Category(Icon("", ""), name = "cate1", id = "123"),
+                            Category(Icon("", ""), name = "cate2", id = "124"),
+                            Category(Icon("", ""), name = "cate5", id = "125")
+                        )
+                    )
                 )
             )
         }
@@ -158,7 +167,42 @@ class MainViewModelTest : BaseViewModelTest() {
 
     private fun mockResult(): List<VenueResult> = listOf(
         VenueResult(
-            categories = emptyList(),
+            categories = listOf(
+                Category(Icon("", ""), name = "cate1", id = "123"),
+                Category(Icon("", ""), name = "cate2", id = "124")
+            ),
+            distance = 111,
+            geocode = GeoCode(Main(1.0, 1.0)),
+            location = Location(
+                address = "",
+                country = "",
+                locality = "",
+                neighbourhood = emptyList(),
+                postcode = "",
+                region = "",
+                formatted_address = ""
+            ),
+            name = "Startbucks",
+            timezone = "Asia/Seoul"
+        ),
+        VenueResult(
+            categories = listOf(Category(Icon("", ""), name = "cate1", id = "123")),
+            distance = 111,
+            geocode = GeoCode(Main(1.0, 1.0)),
+            location = Location(
+                address = "",
+                country = "",
+                locality = "",
+                neighbourhood = emptyList(),
+                postcode = "",
+                region = "",
+                formatted_address = ""
+            ),
+            name = "Startbucks",
+            timezone = "Asia/Seoul"
+        ),
+        VenueResult(
+            categories = listOf(Category(Icon("", ""), name = "cate5", id = "125")),
             distance = 111,
             geocode = GeoCode(Main(1.0, 1.0)),
             location = Location(

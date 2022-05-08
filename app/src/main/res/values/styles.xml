@@ -12,4 +12,8 @@
         <item name="android:textSize">12sp</item>
     </style>
 
+    <style name="Widget.Chip.Choice" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="chipBackgroundColor">@color/chip_state_bg_colors</item>
+    </style>
+
 </resources>

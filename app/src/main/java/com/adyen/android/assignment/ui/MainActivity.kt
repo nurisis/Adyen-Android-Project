@@ -19,24 +19,31 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.adyen.android.assignment.R
+import com.adyen.android.assignment.api.model.Category
 import com.adyen.android.assignment.databinding.ActivityMainBinding
 import com.adyen.android.assignment.ui.adapter.VenueListAdapter
 import com.adyen.android.assignment.ui.state.MainState
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipDrawable
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        private const val KEY_VENUE_SCROLL_POSITION = "KEY_VENUE_SCROLL_POSITION"
+        private const val KEY_CATEGORY_SCROLL_POSITION = "KEY_CATEGORY_SCROLL_POSITION"
+    }
+
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private val venueListAdapter: VenueListAdapter by lazy { VenueListAdapter() }
 
-    private val scrollPositionKey = "KEY_SCROLL_POSITION"
-
     // Remember scroll position of the list for configuration changes
-    private var scrollPosition: Int? = null
+    private var venueScrollPosition: Int? = null
+    private var categoryScrollPosition: Int? = null
 
     private val requestFineLocationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -66,7 +73,8 @@ class MainActivity : AppCompatActivity() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        scrollPosition = savedInstanceState?.getInt(scrollPositionKey)
+        venueScrollPosition = savedInstanceState?.getInt(KEY_VENUE_SCROLL_POSITION)
+        categoryScrollPosition = savedInstanceState?.getInt(KEY_CATEGORY_SCROLL_POSITION)
     }
 
     override fun onStart() {
@@ -151,6 +159,7 @@ class MainActivity : AppCompatActivity() {
                 binding.venuesRecyclerView.visibility = View.GONE
                 binding.emptyView.visibility = View.GONE
                 binding.currentLocationImageView.visibility = View.GONE
+                binding.collapsingToolbarLayout.visibility = View.GONE
             }
             is MainState.Loading -> {
                 binding.loadingView.visibility = View.VISIBLE
@@ -172,15 +181,18 @@ class MainActivity : AppCompatActivity() {
             is MainState.PermissionGranted.ShowVenues -> {
                 binding.venuesRecyclerView.visibility = View.VISIBLE
                 binding.currentLocationImageView.visibility = View.VISIBLE
+                binding.collapsingToolbarLayout.visibility = View.VISIBLE
                 binding.emptyView.visibility = View.GONE
 
                 venueListAdapter.submitList(state.list) {
-                    scrollPosition?.let {
+                    venueScrollPosition?.let {
                         binding.venuesRecyclerView.scrollToPosition(it)
 
-                        scrollPosition = null
+                        venueScrollPosition = null
                     }
                 }
+
+                fetchCategoryList(state.categoryList, state.selectedCategoryId)
             }
             is MainState.PermissionDenied -> {
                 showEmptyView(
@@ -206,6 +218,37 @@ class MainActivity : AppCompatActivity() {
                     }
                 )
             }
+        }
+    }
+
+    private fun fetchCategoryList(list: List<Category>, selectedCategoryId: String?) {
+        binding.categoryGroup.removeAllViews()
+
+        list.forEach { category ->
+            val chip = Chip(this)
+
+            chip.setChipDrawable(
+                ChipDrawable.createFromAttributes(
+                    this,
+                    null,
+                    0,
+                    R.style.Widget_Chip_Choice
+                )
+            )
+            chip.text = category.name
+            chip.id = category.id.toIntOrNull() ?: -1
+            chip.isChecked = (category.id == selectedCategoryId)
+
+            binding.categoryGroup.addView(chip)
+        }
+
+        // Restore scroll position
+        categoryScrollPosition?.let { position ->
+            binding.categoryContainer.post {
+                binding.categoryContainer.scrollTo(position, 0)
+            }
+
+            categoryScrollPosition = null
         }
     }
 
@@ -238,7 +281,12 @@ class MainActivity : AppCompatActivity() {
 
         setScrollTopIconVisibility()
         binding.scrollTopImageView.setOnClickListener {
-            binding.venuesRecyclerView.smoothScrollToPosition(0)
+            binding.venuesRecyclerView.scrollToPosition(0)
+            binding.appBarLayout.setExpanded(true)
+        }
+
+        binding.categoryGroup.setOnCheckedStateChangeListener { _, checkedIds ->
+            viewModel.selectCategory(checkedIds.getOrNull(0)?.toString())
         }
     }
 
@@ -260,6 +308,7 @@ class MainActivity : AppCompatActivity() {
         binding.emptyView.visibility = View.VISIBLE
         binding.venuesRecyclerView.visibility = View.GONE
         binding.currentLocationImageView.visibility = View.GONE
+        binding.collapsingToolbarLayout.visibility = View.GONE
 
         binding.emptyView.title = getString(titleResId)
         binding.emptyView.message = getString(messageResId)
@@ -271,10 +320,14 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
+        // Store venue list scroll position
         (binding.venuesRecyclerView.layoutManager as? LinearLayoutManager)?.findFirstCompletelyVisibleItemPosition()
             ?.let {
-                outState.putInt(scrollPositionKey, it)
+                outState.putInt(KEY_VENUE_SCROLL_POSITION, it)
             }
+
+        // Store category list scroll position
+        outState.putInt(KEY_CATEGORY_SCROLL_POSITION, binding.categoryContainer.scrollX)
     }
 
 }

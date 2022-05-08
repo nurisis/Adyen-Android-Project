@@ -1,5 +1,6 @@
 package com.adyen.android.assignment.ui.state
 
+import com.adyen.android.assignment.api.model.Category
 import com.adyen.android.assignment.api.model.VenueResult
 
 sealed class MainState {
@@ -17,6 +18,8 @@ sealed class MainState {
 
         data class ShowVenues(
             val list: List<VenueResult>,
+            val categoryList: List<Category>,
+            val selectedCategoryId: String?
         ) : MainState()
     }
 
