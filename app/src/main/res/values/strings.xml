@@ -1,25 +1,22 @@
 <resources>
     <string name="app_name">Android Assignment</string>
 
-    <string name="main_title">Find places around your location 🧐</string>
+    <string name="main_title">Find places around you 🧐</string>
 
     <string name="main_item_distance">%dm away from you 😊</string>
 
-    <string name="main_set_your_location">Set your location!</string>
-    <string name="main_fine_location_permission_dialog_message">Allow the Precise Location permission to get more useful information :) </string>
+    <string name="main_fine_location_permission_dialog_message">If you want to get more accurate information, we recommend that you allow precise location permission 😊</string>
     <string name="main_fine_location_permission_dialog_positive_button">Okay</string>
-    <string name="main_fine_location_permission_dialog_negative_button">Cancel</string>
 
-    <string name="main_permission_granted_empty_title">No venues around you</string>
-    <string name="main_permission_granted_empty_message">Move to other place and search again!</string>
-    <string name="main_permission_granted_empty_cta">Get current location!</string>
+    <string name="main_permission_granted_empty_title">No places around you</string>
+    <string name="main_permission_granted_empty_message">Change the location and search again!</string>
 
-    <string name="main_permission_denied_empty_title">Need location permission</string>
-    <string name="main_permission_denied_empty_message">Allow your location permission, and find venues around you!</string>
-    <string name="main_permission_denied_empty_cta">Go to setting</string>
+    <string name="main_permission_denied_empty_title">Location permission required</string>
+    <string name="main_permission_denied_empty_cta">Setting Permissions</string>
 
     <string name="main_error_title">Oops!</string>
-    <string name="main_error_message">Please try again!</string>
-    <string name="main_error_get_current_location_message">Failed to get current location. Please try again!</string>
-    <string name="main_error_cta">Retry</string>
+    <string name="main_error_message">A error has occurred. Please try again.</string>
+    <string name="main_error_get_current_location_message">An error occurred while getting the current location. Please try again!</string>
+
+    <string name="retry">Retry</string>
 </resources>

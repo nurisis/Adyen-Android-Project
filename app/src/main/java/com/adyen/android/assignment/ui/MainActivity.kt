@@ -11,6 +11,8 @@ import android.provider.Settings
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -153,17 +155,15 @@ class MainActivity : AppCompatActivity() {
                 binding.loadingView.visibility = View.VISIBLE
             }
             is MainState.PermissionGranted.Empty -> {
-                binding.venuesRecyclerView.visibility = View.GONE
-                binding.emptyView.visibility = View.VISIBLE
-                binding.currentLocationImageView.visibility = View.GONE
-
-                binding.emptyView.title = getString(R.string.main_permission_granted_empty_title)
-                binding.emptyView.message =
-                    getString(R.string.main_permission_granted_empty_message)
-                binding.emptyView.buttonText = getString(R.string.main_permission_granted_empty_cta)
-                binding.emptyView.buttonClickListener = View.OnClickListener {
-                    checkLocationPermissions()
-                }
+                showEmptyView(
+                    titleResId = R.string.main_permission_granted_empty_title,
+                    messageResId = R.string.main_permission_granted_empty_message,
+                    imageResId = R.drawable.ic_refresh_48,
+                    buttonTextResId = R.string.retry,
+                    buttonClickListener = {
+                        checkLocationPermissions()
+                    }
+                )
             }
             is MainState.PermissionGranted.ShowVenues -> {
                 binding.venuesRecyclerView.visibility = View.VISIBLE
@@ -177,34 +177,31 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             is MainState.PermissionDenied -> {
-                binding.venuesRecyclerView.visibility = View.GONE
-                binding.emptyView.visibility = View.VISIBLE
-                binding.currentLocationImageView.visibility = View.GONE
-
-                binding.emptyView.title = getString(R.string.main_permission_denied_empty_title)
-                binding.emptyView.message =
-                    getString(R.string.main_fine_location_permission_dialog_message)
-                binding.emptyView.buttonText = getString(R.string.main_permission_denied_empty_cta)
-                binding.emptyView.buttonClickListener = View.OnClickListener {
-                    goToAppSetting()
-                }
+                showEmptyView(
+                    titleResId = R.string.main_permission_denied_empty_title,
+                    messageResId = R.string.main_fine_location_permission_dialog_message,
+                    imageResId = R.drawable.ic_my_location_48,
+                    buttonTextResId = R.string.main_permission_denied_empty_cta,
+                    buttonClickListener = {
+                        goToAppSetting()
+                    }
+                )
             }
             is MainState.GetCurrentLocation -> {
                 getCurrentLocation()
             }
             is MainState.Error -> {
-                binding.venuesRecyclerView.visibility = View.GONE
-                binding.emptyView.visibility = View.VISIBLE
-                binding.currentLocationImageView.visibility = View.GONE
-
-                binding.emptyView.title = getString(R.string.main_error_title)
-                binding.emptyView.message = if (state is MainState.Error.CurrentLocationFail) {
-                    getString(R.string.main_error_get_current_location_message)
-                } else getString(R.string.main_error_message)
-                binding.emptyView.buttonText = getString(R.string.main_error_cta)
-                binding.emptyView.buttonClickListener = View.OnClickListener {
-                    checkLocationPermissions()
-                }
+                showEmptyView(
+                    titleResId = R.string.main_error_title,
+                    messageResId = if (state is MainState.Error.CurrentLocationFail) {
+                        R.string.main_error_get_current_location_message
+                    } else R.string.main_error_message,
+                    imageResId = R.drawable.ic_refresh_48,
+                    buttonTextResId = R.string.retry,
+                    buttonClickListener = {
+                        checkLocationPermissions()
+                    }
+                )
             }
         }
     }
@@ -242,6 +239,24 @@ class MainActivity : AppCompatActivity() {
         binding.scrollTopImageView.setOnClickListener {
             binding.venuesRecyclerView.smoothScrollToPosition(0)
         }
+    }
+
+    private fun showEmptyView(
+        @StringRes titleResId: Int,
+        @StringRes messageResId: Int,
+        @DrawableRes imageResId: Int,
+        @StringRes buttonTextResId: Int,
+        buttonClickListener: View.OnClickListener,
+    ) {
+        binding.emptyView.visibility = View.VISIBLE
+        binding.venuesRecyclerView.visibility = View.GONE
+        binding.currentLocationImageView.visibility = View.GONE
+
+        binding.emptyView.title = getString(titleResId)
+        binding.emptyView.message = getString(messageResId)
+        binding.emptyView.buttonText = getString(buttonTextResId)
+        binding.emptyView.imageResId = imageResId
+        binding.emptyView.buttonClickListener = buttonClickListener
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
